@@ -57,8 +57,8 @@ jobs:
         # detect_search_depth: 2
         # detect_args: '--detect.diagnostic=true'
         # detect_config_path: '/Users/Config/application.properties'
-        # coverity_build_command: mvn clean install
-        # coverity_clean_command: mvn clean
+        coverity_build_command: gcc bug-quize.c
+        coverity_clean_command: rm a.out
         # coverity_config_path: /Users/Config/coverity.yml
         # coverity_args: --config-override capture.build.build-command=mvn install
         # coverity_version: '2025.6.2'
@@ -71,7 +71,8 @@ jobs:
       with:
         polaris_server_url: ${{ vars.POLARIS_SERVER_URL }}
         polaris_access_token: ${{ secrets.POLARIS_ACCESS_TOKEN }}
-        polaris_application_name: ${{ github.event.repository.name }}
+        polaris_application_name: MT-test
+        # polaris_application_name: ${{ github.event.repository.name }}
         polaris_project_name: ${{ github.event.repository.name }}
         polaris_assessment_types: "SCA,SAST"
         # project_directory: ${{ vars.PROJECT_DIRECTORY }}
