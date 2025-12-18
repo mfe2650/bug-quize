@@ -26,8 +26,8 @@ jobs:
         coverity_clean_command: rm a.out
         
         ### SCANNING: Optional fields
-        # polaris_application_name: ${{ github.event.repository.name }}
-        # polaris_project_name: ${{ github.event.repository.name }}
+        polaris_application_name: MT-test
+        polaris_project_name: ${{ github.event.repository.name }}
 
                 ### PULL REQUEST COMMENTS: Uncomment below to enable
         # polaris_prComment_enabled: true 
