@@ -38,7 +38,7 @@ jobs:
         #polaris_upload_sarif_report: true
 
                 ### Signature scan
-        #polaris_test_sca_type: "SCA-SIGNATURE"
+        polaris_test_sca_type: "SCA-SIGNATURE"
 
                 ### Mark build status if policy violating issues are found
         # mark_build_status: 'success'
