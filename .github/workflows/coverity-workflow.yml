@@ -1,37 +1,37 @@
-# example workflow for Coverity scans using the Black Duck Security Scan Action
-# https://github.com/marketplace/actions/black-duck-security-scan
-name: coverity-analysis-local
+name: Coverity Scan
 on:
   push:
-    branches: [ main, master, develop, stage, release ]
-  workflow_dispatch:
-  
+    branches:
+      - main
+      - master
+      - develop
+      - stage
+      - release
+  pull_request:
+    branches:
+      - main
+      - master
+      - develop
+      - stage
+      - release
+  workflow_dispatch: {}
 jobs:
-  build:
-    runs-on: [ self-hosted ]
-
-    env:
-      COVERITY_URL: ${{ vars.COVERITY_URL }}
-      COV_USER: ${{ secrets.COVERITY_USER }}
-      COVERITY_PASSPHRASE: ${{ secrets.COVERITY_PASSPHRASE }}
-      coverity_Stream_Name: bug-quize
-      coverity_Build_Commnad: make  
-      #cov_build_options: --config /home/Desktop/Coverity/Analysis/Test_1/coverity_config.xml
-      coverity_checkers: --all --sigma disable --disable-spotbugs
-      coverity_analysis_path: /home/coverity/cov-analysis-linux64-2024.9.1
-              
-      - name: Coverity Build
-        shell: bash
-        run: |
-          export PATH=$coverity_analysis_path/bin:$PATH
-　　　　　　　　　cov-build --dir idir $coverity_Build_Commnad
-      - name: Coverity Analysis
-        run: |
-          export PATH=$coverity_analysis_path/bin:$PATH
-          cov-analyze --dir idir --strip-path `pwd` $coverity_checkers
-      - name: Coverity Commit Defects
-        run: |
-          export PATH=$coverity_analysis_path/bin:$PATH
-          cov-commit-defects --dir idir --ticker-mode none --url $COVERITY_URL --user $COVERITY_USER --password $COVERITY_PASSPHRASE --stream \
-              $coverity_Stream_Name 
-
+  coverity:
+    runs-on: self-hosted
+    steps:
+      - name: Checkout Source
+        uses: actions/checkout@v4
+      - name: Coverity Scan
+        id: coverity-scan
+        uses: blackduck-inc/black-duck-security-scan@v2
+        with:
+          coverity_url: ${{ vars.COVERITY_URL }}
+          coverity_user: ${{ secrets.COVERITY_USER }}
+          coverity_passphrase: ${{ secrets.COVERITY_PASSPHRASE }}
+          coverity_local: true
+          coverity_install_directory: ${{ vars.COVERITY_INSTALL_DIRECTORY }}
+          coverity_waitForScan: true
+          mark_build_status: failure
+          include_diagnostics: false
+          #coverity_prComment_enabled: true
+          #github_token: ${{ secrets.GH_TOKEN }}
