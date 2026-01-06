@@ -1,35 +1,48 @@
-name: Coverity
+# example workflow for Coverity scans using the Black Duck Security Scan Action
+# https://github.com/marketplace/actions/black-duck-security-scan
+name: coverity-sarif-report
 on:
   push:
-    branches: [ master ]
+    branches: [ main, master, develop, stage, release ]
   workflow_dispatch:
- 
 jobs:
-  Coverity:
- 
-    runs-on: self-hosted
- 
-    env:
-      COV_URL: ${{ vars.COVERITY_URL }}
-      COV_USER: ${{ secrets.COVERITY_USER }}
-      COVERITY_PASSPHRASE: ${{ secrets.COVERITY_PASSPHRASE }}
-      COVERITY_PROJECT: bug-quize
-      COVBIN: /home/coverity/cov-analysis-linux64-2024.9.1/bin
-      BLDCMD: make 
-      # CHECKERS: --webapp-security
- 
+  coverity:
+    runs-on: ubuntu-latest
     steps:
-    - uses: AutoModality/action-clean@v1
-    - uses: actions/checkout@v2
-    #- uses: actions/setup-java@v1
-      #with:
-      #  java-version: 11
- 
+    - name: Checkout Source
+      uses: actions/checkout@v6
+    - name: Setup Java JDK
+      uses: actions/setup-java@v5
+      with:
+        java-version: 21
+        distribution: temurin
+        cache: maven
     - name: Coverity Full Scan
+      uses: blackduck-inc/black-duck-security-scan@v2
+      with:
+        coverity_url: ${{ vars.COVERITY_URL }}
+        coverity_user: ${{ secrets.COVERITY_USER }}
+        coverity_passphrase: ${{ secrets.COVERITY_PASSPHRASE }}
+        # coverity_project_name: ${{ github.event.repository.name }}
+        # coverity_stream_name: ${{ github.event.repository.name }}-${{ github.ref_name }}
+        # coverity_policy_view: 'Outstanding Issues'
+        #coverity_build_command: mvn -B -DskipTests package
+        #coverity_clean_command: mvn -B clean
+        coverity_build_command: make
+        coverity_clean_command: make clean
+        coverity_local: true
+    - name: Coverity SARIF Report
+      env:
+        COVERITY_URL: ${{ vars.COVERITY_URL }}
+        COV_USER: ${{ secrets.COVERITY_USER }}
+        COVERITY_PASSPHRASE: ${{ secrets.COVERITY_PASSPHRASE }}
       run: |
-        export PATH=$PATH:$COVBIN
-        set -x
-        cov-build --dir idir --fs-capture-search $GITHUB_WORKSPACE $BLDCMD
-        cov-analyze --dir idir --ticker-mode none --strip-path $GITHUB_WORKSPACE $CHECKERS
-        cov-commit-defects --dir idir --ticker-mode none --url $COV_URL --stream $COVERITY_PROJECT-${GITHUB_REF##*/} --scm git \
-          --description $GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID --target $RUNNER_OS --version $GITHUB_SHA
+        COVERITY_TOOL_HOME=/home/coverity/cov-analysis-linux64-2024.9.1/bin/*
+        IDIR=$(find ${{ github.workspace }}/.bridge -name idir)
+        $COVERITY_TOOL_HOME/bin/cov-format-errors --dir "$IDIR" --json-output-v10 issues.json
+        $COVERITY_TOOL_HOME/node/bin/node $COVERITY_TOOL_HOME/SARIF/cov-format-sarif-for-github.js --inputFile issues.json --outputFile results.sarif \
+          --githubUrl ${{ github.server_url }} --repoName ${{ github.repository }} --checkoutPath ${{ github.repository }} ${{ github.workspace }} ${{ github.sha }}
+    - name: Upload SARIF Report
+      uses: github/codeql-action/upload-sarif@v3
+      with:
+        sarif_file: results.sarif
