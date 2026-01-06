@@ -32,8 +32,8 @@ jobs:
           # github_token: ${{ secrets.GITHUB_TOKEN }} # Required when PR comments is enabled
           
           ### Arbitrary product-related CL arguments
-          coverity_build_command: gcc bug-quize.c
-          coverity_clean_command: rm a.out
+          coverity_build_command: make
+          coverity_clean_command: make clean
           # coverity_config_path: /Users/Config/coverity.yml
           # coverity_args: -c /Users/Config/coverity.yml -o capture.build.clean-command="mvn clean" -- mvn clean install
         
