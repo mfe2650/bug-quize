@@ -5,44 +5,33 @@ on:
   push:
     branches: [ main, master, develop, stage, release ]
   workflow_dispatch:
+  
 jobs:
-  coverity:
-    runs-on: ubuntu-latest
-    steps:
-    - name: Checkout Source
-      uses: actions/checkout@v6
-    #- name: Setup Java JDK
-    #  uses: actions/setup-java@v5
-    #  with:
-    #    java-version: 21
-    #    distribution: temurin
-    #    cache: maven
-    - name: Coverity Full Scan
-      uses: blackduck-inc/black-duck-security-scan@v2
-      with:
-        coverity_url: ${{ vars.COVERITY_URL }}
-        coverity_user: ${{ secrets.COVERITY_USER }}
-        coverity_passphrase: ${{ secrets.COVERITY_PASSPHRASE }}
-        # coverity_project_name: ${{ github.event.repository.name }}
-        # coverity_stream_name: ${{ github.event.repository.name }}-${{ github.ref_name }}
-        # coverity_policy_view: 'Outstanding Issues'
-        #coverity_build_command: mvn -B -DskipTests package
-        #coverity_clean_command: mvn -B clean
-        coverity_build_command: make
-        coverity_clean_command: make clean
-        coverity_local: true
-    - name: Coverity SARIF Report
-      env:
-        COVERITY_URL: ${{ vars.COVERITY_URL }}
-        COV_USER: ${{ secrets.COVERITY_USER }}
-        COVERITY_PASSPHRASE: ${{ secrets.COVERITY_PASSPHRASE }}
-      run: |
-        COVERITY_TOOL_HOME=/home/coverity/cov-analysis-linux64-2024.9.1/bin/*
-        IDIR=$(find ${{ github.workspace }}/.bridge -name idir)
-        $COVERITY_TOOL_HOME/bin/cov-format-errors --dir "$IDIR" --json-output-v10 issues.json
-        $COVERITY_TOOL_HOME/node/bin/node $COVERITY_TOOL_HOME/SARIF/cov-format-sarif-for-github.js --inputFile issues.json --outputFile results.sarif \
-          --githubUrl ${{ github.server_url }} --repoName ${{ github.repository }} --checkoutPath ${{ github.repository }} ${{ github.workspace }} ${{ github.sha }}
-    - name: Upload SARIF Report
-      uses: github/codeql-action/upload-sarif@v3
-      with:
-        sarif_file: results.sarif
+  build:
+    runs-on: [self-hosted]
+
+    env:
+      COVERITY_URL: ${{ vars.COVERITY_URL }}
+      COV_USER: ${{ secrets.COVERITY_USER }}
+      COVERITY_PASSPHRASE: ${{ secrets.COVERITY_PASSPHRASE }}
+      coverity_Stream_Name: bug-quize
+      coverity_Build_Commnad: make  
+      #cov_build_options: --config /home/Desktop/Coverity/Analysis/Test_1/coverity_config.xml
+      coverity_checkers: --all --sigma disable --disable-spotbugs
+      coverity_analysis_path: /home/coverity/cov-analysis-linux64-2024.9.1
+              
+      - name: Coverity Build
+        shell: bash
+        run: |
+          export PATH=$coverity_analysis_path/bin:$PATH
+　　　　　　　　　cov-build --dir idir $coverity_Build_Commnad
+      - name: Coverity Analysis
+        run: |
+          export PATH=$coverity_analysis_path/bin:$PATH
+          cov-analyze --dir idir --strip-path `pwd` $coverity_checkers
+      - name: Coverity Commit Defects
+        run: |
+          export PATH=$coverity_analysis_path/bin:$PATH
+          cov-commit-defects --dir idir --ticker-mode none --url $COVERITY_URL --user $COVERITY_USER --password $COVERITY_PASSPHRASE --stream \
+              $coverity_Stream_Name 
+
