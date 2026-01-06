@@ -1,6 +1,6 @@
 # example workflow for Coverity scans using the Black Duck Security Scan Action
 # https://github.com/marketplace/actions/black-duck-security-scan
-name: coverity-sarif-report
+name: coverity-analysis-local
 on:
   push:
     branches: [ main, master, develop, stage, release ]
@@ -8,7 +8,7 @@ on:
   
 jobs:
   build:
-    runs-on: [self-hosted]
+    runs-on: self-hosted
 
     env:
       COVERITY_URL: ${{ vars.COVERITY_URL }}
