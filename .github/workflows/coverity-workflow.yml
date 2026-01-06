@@ -24,7 +24,8 @@ jobs:
           ### Perform local analysis with full toolkit
           coverity_local: true
           ### e.g. /opt/cov-analysis-linux64-2025.6.2 (Don't include "bin")
-          coverity_install_directory: ${{ vars.COVERITY_INSTALL_DIRECTORY }}
+          #coverity_install_directory: ${{ vars.COVERITY_INSTALL_DIRECTORY }}
+          coverity_install_directory: /home/coverity/cov-analysis-linux64-2024.9.1
           ### POLICY ENFORCEMENT: Break build on full scan when encounter oustanding issues
           #coverity_policy_view: ${{ github.event_name != 'pull_request' && 'Outstanding Issues' || '' }}
           ### PULL REQUEST COMMENTS:
